@@ -7,37 +7,38 @@
 			animation: 450,
 			// Анимированная картинка загрузчика
 			image: null,
+			// Цвет фона загрузчика
+			backgroundColor: null,
 			// Callback-функция, вызываемая по окончанию загрузки
 			callback: null,
 			// Выводить отладочную информарцию в консоль
 			debug: false
 		}, options);
-
+		
 		// Включаем/выключаем отладку
 		dbg.debug = settings.debug;
-
+		
 		// Объект-состояние
 		var state = {
-			content: "",	// Загруженное содержимое блока
-			sourcesNum: 0	// Кол-во загружаемых изображений
+			content: "", // Загруженное содержимое блока
+			sourcesNum: 0 // Кол-во загружаемых изображений
 		}
-
+		
 		// Обязательно возвращаем сам объект, чтобы можно было в последствии применять к нему другие методы jQuery
 		return this.each(function() {
 			// Объект-контейнер, в который будем грузить содержимое
 			var obj = $(this);
 			// Добавляем объекту загрузчик
 			$.extend(obj, {"_loader": $.extend(true, {}, loader)});
-			obj._loader.init({container: obj, animation: settings.animation, image: settings.image});
+			obj._loader.init({container: obj, animation: settings.animation, image: settings.image, backgroundColor: settings.backgroundColor});
 			// Запускаем процесс
 			obj._loader.show(function() {
-				state.content = obj.html();
 				// Запрос контента
 				$.ajax({
 					url: settings.url,
 					dataType: "html",
 					success: function(data) {
-						obj.html(data);
+						state.content = data;
 						$("*", data).each(function () {
 							if ($(this).attr("src")) {
 								// Увлеичиваем счетчик загружаемых объектов
@@ -50,6 +51,7 @@
 									// Если все загружено, то закроем загрузчик
 									if (state.sourcesNum == 0) {
 										obj._loader.hide(settings.callback);
+										obj.html(state.content);
 										dbg.out("everything loaded!");
 									}
 								});
@@ -65,7 +67,7 @@
 			});
 		});
 	}
-
+	
 	// Вспомогательный функционал
 	// Визуальный загрузчик — див, который будет перекрывать контейнер во время загрузки в него содержимого
 	var loader = {
@@ -77,7 +79,6 @@
 		container: null,
 		// Визуальаня часть загрузчика
 		obj: $("<div>").css({
-			"background-color": "#FFF",
 			"background-position": "center center",
 			"background-repeat": "no-repeat",
 			display: "none",
@@ -85,18 +86,18 @@
 			"z-index": 100
 		}),
 		/**
-		 * Метод инициализации загрузчика
-		 * @param {object} settings Объект с настройками:
-		 *  container — jQuery-объект контейнер, в который будем грузить содержимое
-		 *  animation — скорость анимации
-		 *  image — имя файла загрузчика
-		 * @this {loader}
-		 */
+		* Метод инициализации загрузчика
+		* @param {object} settings Объект с настройками:
+		* container — jQuery-объект контейнер, в который будем грузить содержимое
+		* animation — скорость анимации
+		* image — имя файла загрузчика
+		* @this {loader}
+		*/
 		init: function (settings) {
 			var l = this;
 			l.id = "loader"+ Math.floor(Math.random()* 1000);
 			l.container = settings.container;
-
+			
 			l.obj.attr("id", l.id).css({
 				height: l.container.outerHeight() +"px",
 				left: l.container.offset().left +"px",
@@ -104,11 +105,15 @@
 				width: l.container.outerWidth() +"px",
 			}).appendTo("body");
 
+			// Устанавливаем фоновое изображение, если таковое было задано
+			if (settings.backgroundColor)
+				l.obj.css({"background-color": settings.backgroundColor});
+
 			if (settings.image) {
 				l.obj.css({"background-image": "url('"+ settings.image +"')"});
-				$("<img>").attr("src", settings.image);	// Предварительная загрузка картинки
+				$("<img>").attr("src", settings.image); // Предварительная загрузка картинки
 			} else {
-				// Если картинка не задана, то добавим в наш загрузчик div с надписью «loading...»
+			// Если картинка не задана, то добавим в наш загрузчик div с надписью «loading...»
 				$("<div>").text("loading...").css({
 					position: "relative",
 					"text-align": "center",
@@ -116,22 +121,22 @@
 					width: "100%"
 				}).appendTo(l.obj);
 			}
-
+			
 			if (settings.animation)
 				l.animation = settings.animation;
 		},
 		/**
-		 * Метод, показывающий загрузчик на экране
-		 * @param {function} callback Функция, вызываемая после показа загрузчика
-		 */
+		* Метод, показывающий загрузчик на экране
+		* @param {function} callback Функция, вызываемая после показа загрузчика
+		*/
 		show: function(callback) {
 			var l = this;
 			l.obj.fadeIn(l.animation, function() {if (callback) callback.call(null)});
 		},
 		/**
-		 * Метод для скрытия загрузчика
-		 * @param {function} callback Функция вызываемая после скрытия блока
-		 */
+		* Метод для скрытия загрузчика
+		* @param {function} callback Функция вызываемая после скрытия блока
+		*/
 		hide: function(callback) {
 			var l = this;
 			l.obj.fadeOut(l.animation, function() {
@@ -140,14 +145,14 @@
 			});
 		}
 	}
-
+	
 	// Отладчик
 	var dbg = {
 		// Флаг, определяющий выводить или нет отладочную информацию
 		debug: false,
 		/**
-		 * Единственный метод выводящий инфу в консоль, если таковая присутствует
-		 */
+		* Единственный метод выводящий инфу в консоль, если таковая присутствует
+		*/
 		out: function() {
 			if (this.debug && window.console)
 				window.console.log.apply(window.console, arguments);

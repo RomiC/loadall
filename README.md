@@ -7,6 +7,7 @@ Options
 -------
 * `animation` – Animation speed in milliseconds
 * `image` – Animated gif-loader (you can use [ajaxload.info](http://ajaxload.info/) to create it)
+* `backgroundColor` – background color for the div loader (if null, loader would be transparent)
 * `callback` – Callback-function called after all content is loaded
 * `debug` – Print debug message to console (true – yes, false – no)
 

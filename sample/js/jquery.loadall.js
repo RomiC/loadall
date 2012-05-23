@@ -154,7 +154,7 @@
 		* Единственный метод выводящий инфу в консоль, если таковая присутствует
 		*/
 		out: function() {
-			if (this.debug && window.console)
+			if (this.debug && window.console && typeof window.console.log == "function")
 				window.console.log.apply(window.console, arguments);
 		}
 	}
